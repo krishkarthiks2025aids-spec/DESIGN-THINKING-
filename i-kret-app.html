@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>I-KRET — OP Appointment System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Public+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #16302C;
+    --teal: #0E6E64;
+    --teal-deep: #0A4A44;
+    --teal-pale: #EAF4F2;
+    --amber: #C77F1F;
+    --amber-pale: #FBF0DD;
+    --red: #A83A31;
+    --red-pale: #FBEAE7;
+    --green: #2E7D4F;
+    --green-pale: #E8F4EC;
+    --paper: #FFFFFF;
+    --line: #D9E4E2;
+    --muted: #5C726D;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Public Sans', sans-serif;
+    color: var(--ink);
+    background: var(--teal-pale);
+    -webkit-font-smoothing: antialiased;
+  }
+  .topband {
+    background: var(--teal-deep);
+    color: white;
+    padding: 18px 24px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .brand {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: 0.5px;
+  }
+  .brand span { color: #7FCFC0; }
+  .subline {
+    font-size: 12.5px;
+    color: #BFE1DA;
+    font-weight: 500;
+  }
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
+  }
+  .tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--line);
+    border-radius: 10px;
+    padding: 4px;
+    max-width: 420px;
+    margin-bottom: 22px;
+  }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px 12px;
+    border-radius: 7px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: inherit;
+  }
+  .tab.active {
+    background: var(--paper);
+    color: var(--teal-deep);
+    box-shadow: 0 1px 3px rgba(10,74,68,0.15);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--paper);
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    padding: 22px 24px;
+  }
+  .card h2 {
+    font-family: 'Archivo', sans-serif;
+    font-size: 18px;
+    margin: 0 0 4px;
+  }
+  .card .hint {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 0 0 18px;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin: 14px 0 6px;
+    color: var(--ink);
+  }
+  input, select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    background: #FCFEFD;
+  }
+  textarea { min-height: 72px; resize: vertical; }
+  input:focus, select:focus, textarea:focus {
+    outline: 2px solid var(--teal);
+    outline-offset: 1px;
+  }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  button.primary {
+    margin-top: 20px;
+    width: 100%;
+    background: var(--teal);
+    color: white;
+    border: none;
+    padding: 13px;
+    border-radius: 9px;
+    font-weight: 700;
+    font-size: 14.5px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  button.primary:hover { background: var(--teal-deep); }
+  button.primary:disabled { background: #9DB8B4; cursor: not-allowed; }
+
+  /* Ticket stub — signature element */
+  .ticket {
+    margin-top: 22px;
+    position: relative;
+    background: linear-gradient(180deg, #FFFFFF 0%, #FCFBF6 100%);
+    border: 1px dashed #C7A15A;
+    border-radius: 10px;
+    padding: 18px 20px 20px;
+    animation: rise 0.35s ease;
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .ticket::before, .ticket::after {
+    content: "";
+    position: absolute;
+    width: 16px; height: 16px;
+    background: var(--teal-pale);
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .ticket::before { left: -9px; }
+  .ticket::after { right: -9px; }
+  .ticket-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px dashed #D8C79A;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+  }
+  .ticket-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .token-number {
+    font-family: 'Space Mono', monospace;
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--teal-deep);
+    line-height: 1;
+    margin-top: 4px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .badge.low { background: var(--green-pale); color: var(--green); }
+  .badge.moderate { background: var(--amber-pale); color: var(--amber); }
+  .badge.high { background: var(--amber-pale); color: #A85A16; }
+  .badge.critical { background: var(--red-pale); color: var(--red); }
+  .ticket-row { display: flex; justify-content: space-between; font-size: 13.5px; margin-top: 8px; }
+  .ticket-row .k { color: var(--muted); }
+  .ticket-row .v { font-weight: 600; }
+  .ticket-reason {
+    margin-top: 12px;
+    font-size: 12.5px;
+    color: var(--muted);
+    font-style: italic;
+    border-top: 1px dashed #D8C79A;
+    padding-top: 10px;
+  }
+  .emergency-flag {
+    margin-top: 12px;
+    background: var(--red-pale);
+    color: var(--red);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  /* Queue board */
+  .board-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .dept-select {
+    max-width: 220px;
+  }
+  .queue-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--line);
+  }
+  .queue-item:last-child { border-bottom: none; }
+  .queue-pos {
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--muted);
+    width: 22px;
+  }
+  .queue-token {
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--teal-deep);
+    width: 52px;
+  }
+  .queue-meta { flex: 1; }
+  .queue-meta .name { font-weight: 600; font-size: 13.5px; }
+  .queue-meta .sub { font-size: 12px; color: var(--muted); }
+  .queue-wait {
+    font-size: 12.5px;
+    color: var(--muted);
+    text-align: right;
+    min-width: 68px;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 30px 10px;
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+  .stat-row { display: flex; gap: 10px; margin-top: 16px; }
+  .stat {
+    flex: 1;
+    background: var(--teal-pale);
+    border-radius: 9px;
+    padding: 10px 12px;
+  }
+  .stat .num { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 18px; color: var(--teal-deep); }
+  .stat .lbl { font-size: 11px; color: var(--muted); font-weight: 600; }
+  footer {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 30px;
+  }
+</style>
+</head>
+<body>
+
+<div class="topband">
+  <div>
+    <div class="brand">I-K<span>RET</span></div>
+    <div class="subline">AI-Integrated Medical Appointment Scheduling · Government Hospitals, Tamil Nadu</div>
+  </div>
+  <div class="subline">Demo mode — runs entirely in this page, no server</div>
+</div>
+
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab active" id="tabPatient" onclick="setView('patient')">Book Appointment</button>
+    <button class="tab" id="tabStaff" onclick="setView('staff')">Queue Display Board</button>
+  </div>
+
+  <div id="patientView" class="grid">
+    <div class="card">
+      <h2>Book an OP appointment</h2>
+      <p class="hint">Describe your symptoms in your own words — the triage agent decides urgency and department, the way a nurse would at intake.</p>
+      <form id="bookingForm">
+        <div class="row2">
+          <div>
+            <label for="name">Patient name</label>
+            <input id="name" required placeholder="e.g. Maheshkumar" />
+          </div>
+          <div>
+            <label for="age">Age</label>
+            <input id="age" type="number" min="0" max="120" required placeholder="e.g. 47" />
+          </div>
+        </div>
+        <label for="dept">Department</label>
+        <select id="dept">
+          <option>General Medicine</option>
+          <option>Pediatrics</option>
+          <option>Orthopedics</option>
+          <option>Gynecology</option>
+        </select>
+        <label for="symptoms">Describe your symptoms</label>
+        <textarea id="symptoms" required placeholder="e.g. fever for 3 days, body pain, tired all the time"></textarea>
+        <button type="submit" class="primary">Get token &amp; book slot</button>
+      </form>
+
+      <div id="ticketArea"></div>
+    </div>
+
+    <div class="card">
+      <h2>How the triage agent decides</h2>
+      <p class="hint">This runs the same rule-based triage logic used as the offline fallback in the full backend, so the demo works without an API key.</p>
+      <div style="font-size:13px; line-height:1.7; color:var(--ink)">
+        <div><span class="badge critical">Critical</span> — chest pain, breathing difficulty, unconsciousness, severe bleeding, stroke signs → redirected to Emergency, not the OP queue.</div>
+        <div style="margin-top:10px"><span class="badge high">High</span> — high fever, vomiting, severe pain, diabetes-related symptoms → prioritized ahead of routine visits.</div>
+        <div style="margin-top:10px"><span class="badge moderate">Moderate</span> — persistent but non-acute symptoms.</div>
+        <div style="margin-top:10px"><span class="badge low">Low</span> — routine checkups, follow-ups, mild symptoms.</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><div class="num" id="statTotal">0</div><div class="lbl">Booked today</div></div>
+        <div class="stat"><div class="num" id="statCritical">0</div><div class="lbl">Flagged urgent</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="staffView" class="grid" style="display:none">
+    <div class="card" style="grid-column: 1 / -1">
+      <div class="board-head">
+        <div>
+          <h2 style="margin-bottom:0">Live queue — reordered by urgency</h2>
+          <p class="hint" style="margin-top:4px">A high-urgency walk-in moves up automatically instead of joining the back of the line.</p>
+        </div>
+        <select class="dept-select" id="deptFilter" onchange="renderQueue()">
+          <option value="all">All departments</option>
+          <option>General Medicine</option>
+          <option>Pediatrics</option>
+          <option>Orthopedics</option>
+          <option>Gynecology</option>
+        </select>
+      </div>
+      <div id="queueList"></div>
+    </div>
+  </div>
+
+  <footer>I-KRET · Sri Eshwar College of Engineering · demo data resets on page reload</footer>
+</div>
+
+<script>
+let appointments = [];
+let tokenCounter = 0;
+
+const emergencyTerms = ["chest pain", "can't breathe", "cant breathe", "unconscious", "severe bleeding", "stroke", "breathing difficulty"];
+const highTerms = ["fever", "vomiting", "severe pain", "high bp", "diabetes", "blood pressure"];
+const urgencyWeight = { critical: 0, high: 1, moderate: 2, low: 3 };
+
+function triage(symptomText) {
+  const text = symptomText.toLowerCase();
+  if (emergencyTerms.some(t => text.includes(t))) {
+    return {
+      urgency: "critical",
+      emergency: true,
+      reasoning: "Symptom text matched an emergency keyword pattern — redirected to Emergency department."
+    };
+  }
+  if (highTerms.some(t => text.includes(t))) {
+    return {
+      urgency: "high",
+      emergency: false,
+      reasoning: "Symptom text matched a high-priority keyword pattern — prioritized ahead of routine visits."
+    };
+  }
+  if (text.length > 60) {
+    return {
+      urgency: "moderate",
+      emergency: false,
+      reasoning: "Detailed symptom description without urgent keywords — treated as moderate priority."
+    };
+  }
+  return {
+    urgency: "low",
+    emergency: false,
+    reasoning: "No urgent keywords detected — routine OP visit."
+  };
+}
+
+function predictWait(queuePosition, urgency) {
+  const base = 6.5 * queuePosition;
+  const urgencyBoost = { critical: -queuePosition * 6, high: -2, moderate: 0, low: 2 }[urgency] || 0;
+  return Math.max(3, Math.round(base + urgencyBoost + 4));
+}
+
+function setView(view) {
+  document.getElementById('patientView').style.display = view === 'patient' ? 'grid' : 'none';
+  document.getElementById('staffView').style.display = view === 'staff' ? 'grid' : 'none';
+  document.getElementById('tabPatient').classList.toggle('active', view === 'patient');
+  document.getElementById('tabStaff').classList.toggle('active', view === 'staff');
+  if (view === 'staff') renderQueue();
+}
+
+document.getElementById('bookingForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  const name = document.getElementById('name').value.trim();
+  const age = document.getElementById('age').value;
+  const dept = document.getElementById('dept').value;
+  const symptoms = document.getElementById('symptoms').value.trim();
+
+  const result = triage(symptoms);
+  const finalDept = result.emergency ? "Emergency" : dept;
+  tokenCounter += 1;
+
+  const sameDept = appointments.filter(a => a.department === finalDept);
+  const wait = predictWait(sameDept.length + 1, result.urgency);
+
+  const appointment = {
+    token: tokenCounter,
+    name, age, department: finalDept,
+    symptoms, urgency: result.urgency,
+    emergency: result.emergency,
+    reasoning: result.reasoning,
+    wait, order: appointments.length
+  };
+  appointments.push(appointment);
+  renderTicket(appointment);
+  updateStats();
+});
+
+function renderTicket(a) {
+  const area = document.getElementById('ticketArea');
+  area.innerHTML = `
+    <div class="ticket">
+      <div class="ticket-top">
+        <div>
+          <div class="ticket-label">Token number</div>
+          <div class="token-number">${String(a.token).padStart(3, '0')}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="ticket-label">Urgency</div>
+          <div style="margin-top:6px"><span class="badge ${a.urgency}">${a.urgency}</span></div>
+        </div>
+      </div>
+      <div class="ticket-row"><span class="k">Patient</span><span class="v">${escapeHtml(a.name)}</span></div>
+      <div class="ticket-row"><span class="k">Department</span><span class="v">${escapeHtml(a.department)}</span></div>
+      <div class="ticket-row"><span class="k">Estimated wait</span><span class="v">${a.wait} min</span></div>
+      ${a.emergency ? `<div class="emergency-flag">⚠ Emergency flagged — please proceed directly to the Emergency department, do not wait for this token.</div>` : ''}
+      <div class="ticket-reason">${escapeHtml(a.reasoning)}</div>
+    </div>
+  `;
+  document.getElementById('bookingForm').reset();
+}
+
+function renderQueue() {
+  const filter = document.getElementById('deptFilter').value;
+  const list = document.getElementById('queueList');
+  let items = filter === 'all' ? appointments.slice() : appointments.filter(a => a.department === filter);
+  items = items.slice().sort((x, y) => (urgencyWeight[x.urgency] - urgencyWeight[y.urgency]) || (x.order - y.order));
+
+  if (items.length === 0) {
+    list.innerHTML = `<div class="empty-state">No one in this queue yet — book an appointment from the patient view to see it appear here.</div>`;
+    return;
+  }
+
+  list.innerHTML = items.map((a, i) => `
+    <div class="queue-item">
+      <div class="queue-pos">${i + 1}</div>
+      <div class="queue-token">#${String(a.token).padStart(3, '0')}</div>
+      <div class="queue-meta">
+        <div class="name">${escapeHtml(a.name)} <span class="badge ${a.urgency}" style="margin-left:6px">${a.urgency}</span></div>
+        <div class="sub">${escapeHtml(a.department)} · age ${escapeHtml(String(a.age))}</div>
+      </div>
+      <div class="queue-wait">~${a.wait} min</div>
+    </div>
+  `).join('');
+}
+
+function updateStats() {
+  document.getElementById('statTotal').textContent = appointments.length;
+  document.getElementById('statCritical').textContent = appointments.filter(a => a.urgency === 'critical' || a.urgency === 'high').length;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>

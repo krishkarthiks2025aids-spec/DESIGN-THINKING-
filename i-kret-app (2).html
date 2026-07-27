@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>I-KRET · AI-Integrated Medical Appointment Scheduling</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Public+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F4EFE3;
+    --paper-raised:#FBF8F1;
+    --ink:#182420;
+    --ink-soft:#4B5751;
+    --teal:#0E6B5C;
+    --teal-dark:#0A4A40;
+    --teal-pale:#DCEAE6;
+    --amber:#E4A234;
+    --amber-dark:#B87A1C;
+    --amber-pale:#FBEBCD;
+    --line:#D6CBB0;
+    --danger:#B5432F;
+    --danger-pale:#F3DCD5;
+    --radius:14px;
+    --shadow: 0 2px 0 rgba(24,36,32,0.06), 0 10px 24px -12px rgba(24,36,32,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:'Public Sans', sans-serif;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(14,107,92,0.05), transparent 40%),
+      radial-gradient(circle at 90% 85%, rgba(228,162,52,0.07), transparent 45%),
+      var(--paper);
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:28px 16px 60px;
+  }
+  h1,h2,h3{font-family:'Archivo', sans-serif; margin:0; letter-spacing:-0.01em;}
+  .mono{font-family:'Space Mono', monospace;}
+  .app{
+    width:100%;
+    max-width:460px;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:18px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .brand-mark{
+    width:38px;height:38px;border-radius:10px;
+    background:var(--teal);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--paper-raised);
+    font-family:'Archivo',sans-serif;
+    font-weight:900;
+    font-size:16px;
+    box-shadow: var(--shadow);
+  }
+  .brand-text b{display:block; font-family:'Archivo',sans-serif; font-weight:800; font-size:16.5px; line-height:1;}
+  .brand-text span{display:block; font-size:10.5px; color:var(--ink-soft); letter-spacing:0.02em;}
+  .lang-toggle{
+    display:flex; background:var(--paper-raised); border:1px solid var(--line); border-radius:999px; padding:3px;
+  }
+  .lang-toggle button{
+    border:none; background:transparent; font-family:'Space Mono',monospace; font-size:11.5px; font-weight:700;
+    padding:6px 11px; border-radius:999px; cursor:pointer; color:var(--ink-soft); letter-spacing:0.03em;
+  }
+  .lang-toggle button.active{ background:var(--teal); color:var(--paper-raised); }
+
+  /* ---------- Progress rail ---------- */
+  .rail{ display:flex; gap:6px; margin-bottom:20px; }
+  .rail-seg{ flex:1; height:4px; border-radius:3px; background:var(--line); overflow:hidden; }
+  .rail-seg i{ display:block; height:100%; width:0%; background:var(--teal); transition:width .4s ease; }
+
+  /* ---------- Card ---------- */
+  .card{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:26px 24px;
+    box-shadow:var(--shadow);
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before{
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:5px;
+    background:repeating-linear-gradient(90deg, var(--teal) 0 18px, var(--amber) 18px 22px);
+    opacity:0.85;
+  }
+  .eyebrow{
+    font-family:'Space Mono',monospace; font-size:11px; font-weight:700; letter-spacing:0.08em;
+    color:var(--teal-dark); text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:8px;
+  }
+  .eyebrow .dot{ width:6px;height:6px;border-radius:50%; background:var(--amber); }
+  .card h2{ font-size:22px; margin-bottom:6px; }
+  .subtext{ color:var(--ink-soft); font-size:13.5px; line-height:1.5; margin-bottom:22px; }
+
+  /* ---------- Form elements ---------- */
+  label{
+    display:block; font-size:12px; font-weight:700; color:var(--ink); margin-bottom:6px; letter-spacing:0.01em;
+  }
+  .field{ margin-bottom:16px; }
+  input[type=text], input[type=tel], input[type=date], select{
+    width:100%; padding:13px 14px; border-radius:10px; border:1.5px solid var(--line);
+    background:#fff; font-family:'Space Mono',monospace; font-size:15px; color:var(--ink);
+    outline:none; transition:border-color .15s;
+  }
+  input:focus, select:focus{ border-color:var(--teal); }
+  .hint{ font-size:11.5px; color:var(--ink-soft); margin-top:5px; }
+  .otp-row{ display:flex; gap:8px; }
+  .otp-row input{ text-align:center; font-size:19px; padding:12px 0; }
+
+  .timeslots{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .timeslot{
+    border:1.5px solid var(--line); background:#fff; border-radius:9px; padding:9px 4px; text-align:center;
+    font-family:'Space Mono',monospace; font-size:12.5px; cursor:pointer; color:var(--ink-soft);
+  }
+  .timeslot.active{ border-color:var(--teal); background:var(--teal-pale); color:var(--teal-dark); font-weight:700; }
+  .timeslot.disabled{ opacity:0.35; text-decoration:line-through; cursor:not-allowed; }
+
+  .role-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:8px; }
+  .role-card{
+    border:1.5px solid var(--line); border-radius:12px; padding:20px 14px; text-align:center; cursor:pointer;
+    background:#fff; transition:transform .12s, border-color .12s;
+  }
+  .role-card:hover{ transform:translateY(-2px); }
+  .role-card .icon{ font-size:28px; margin-bottom:10px; }
+  .role-card b{ display:block; font-family:'Archivo',sans-serif; font-size:15px; margin-bottom:3px;}
+  .role-card span{ font-size:11.5px; color:var(--ink-soft); }
+  .role-card.doctor:hover{ border-color:var(--teal); }
+  .role-card.patient:hover{ border-color:var(--amber-dark); }
+
+  /* ---------- Buttons ---------- */
+  .btn{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; padding:14px 16px; border-radius:10px; border:none;
+    font-family:'Archivo',sans-serif; font-weight:700; font-size:14.5px; cursor:pointer;
+    letter-spacing:0.01em;
+  }
+  .btn-primary{ background:var(--teal); color:#fff; }
+  .btn-primary:hover{ background:var(--teal-dark); }
+  .btn-primary:disabled{ background:#B7C4C0; cursor:not-allowed; }
+  .btn-amber{ background:var(--amber); color:var(--ink); }
+  .btn-amber:hover{ background:var(--amber-dark); color:#fff; }
+  .btn-ghost{ background:transparent; color:var(--ink-soft); border:1.5px solid var(--line); }
+  .btn-ghost:hover{ border-color:var(--ink-soft); }
+  .btn-row{ display:flex; gap:10px; margin-top:6px; }
+  .btn-row .btn{ margin-top:0; }
+  .btn + .btn{ margin-top:10px; }
+
+  .error-box{
+    background:var(--danger-pale); border:1px solid #E3B6A9; color:var(--danger);
+    font-size:12.5px; padding:10px 12px; border-radius:8px; margin-bottom:14px; display:none;
+  }
+  .error-box.show{ display:block; }
+
+  /* ---------- Verified badge ---------- */
+  .verified-banner{
+    display:flex; align-items:center; gap:10px; background:var(--teal-pale); border:1px solid #B9D8D0;
+    border-radius:10px; padding:10px 12px; margin-bottom:18px; font-size:13px; color:var(--teal-dark); font-weight:600;
+  }
+  .verified-banner .tick{ width:20px;height:20px;border-radius:50%; background:var(--teal); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; }
+
+  /* ---------- Dashboard ---------- */
+  .dash-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .dash-user{ display:flex; align-items:center; gap:10px; }
+  .avatar{ width:40px;height:40px;border-radius:10px; background:var(--amber-pale); border:1px solid var(--amber); display:flex;align-items:center;justify-content:center; font-family:'Archivo',sans-serif; font-weight:800; color:var(--amber-dark); }
+  .dash-user b{ display:block; font-family:'Archivo',sans-serif; font-size:14.5px; }
+  .dash-user span{ font-size:11px; color:var(--ink-soft); }
+  .logout-link{ font-size:11.5px; color:var(--ink-soft); text-decoration:underline; cursor:pointer; background:none; border:none; font-family:'Public Sans',sans-serif; }
+
+  .feature-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:6px; }
+  .feature-tile{
+    background:#fff; border:1.5px solid var(--line); border-radius:11px; padding:14px 12px; cursor:pointer;
+    transition:border-color .12s, transform .12s;
+  }
+  .feature-tile:hover{ border-color:var(--teal); transform:translateY(-2px); }
+  .feature-tile .fi{ font-size:19px; margin-bottom:8px; display:block; }
+  .feature-tile b{ display:block; font-family:'Archivo',sans-serif; font-size:12.5px; line-height:1.25; }
+  .feature-tile span{ font-size:10.5px; color:var(--ink-soft); }
+
+  .queue-card{
+    background:var(--teal); color:#fff; border-radius:12px; padding:16px; margin-bottom:16px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .queue-card .num{ font-family:'Space Mono',monospace; font-size:28px; font-weight:700; }
+  .queue-card .lbl{ font-size:11px; opacity:0.85; letter-spacing:0.05em; text-transform:uppercase; }
+
+  .list-row{
+    display:flex; align-items:center; justify-content:space-between; padding:12px 2px;
+    border-bottom:1px solid var(--line); font-size:13px;
+  }
+  .list-row:last-child{ border-bottom:none; }
+  .list-row .tag{
+    font-family:'Space Mono',monospace; font-size:10.5px; padding:3px 8px; border-radius:6px;
+    background:var(--amber-pale); color:var(--amber-dark); font-weight:700;
+  }
+  .tag.urgent{ background:var(--danger-pale); color:var(--danger); }
+  .tag.normal{ background:var(--teal-pale); color:var(--teal-dark); }
+
+  /* ---------- Token stub (confirmation) ---------- */
+  .stub{
+    background:var(--paper-raised); border-radius:12px; position:relative; overflow:visible;
+    border:1.5px dashed var(--ink-soft);
+    padding:0; margin-bottom:18px;
+  }
+  .stub-top{ padding:20px 20px 16px; }
+  .stub-top .op-title{ font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.1em; color:var(--ink-soft); text-transform:uppercase; }
+  .stub-top .op-hosp{ font-family:'Archivo',sans-serif; font-weight:800; font-size:16px; margin:4px 0 14px; }
+  .stub-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; }
+  .stub-grid div b{ display:block; font-size:9.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:2px;}
+  .stub-grid div span{ font-family:'Space Mono',monospace; font-size:13.5px; font-weight:700; }
+  .perforation{
+    position:relative; height:0; border-top:2px dashed var(--line); margin:0 0;
+  }
+  .perforation::before, .perforation::after{
+    content:""; position:absolute; top:-11px; width:22px; height:22px; border-radius:50%; background:var(--paper);
+    border:1.5px dashed var(--ink-soft);
+  }
+  .perforation::before{ left:-33px; }
+  .perforation::after{ right:-33px; }
+  .stub-bottom{ padding:16px 20px 20px; display:flex; align-items:center; gap:16px; }
+  .qr-box{ width:76px; height:76px; background:#fff; border:1px solid var(--line); border-radius:6px; flex-shrink:0; }
+  .stub-bottom .qr-meta{ font-size:11px; color:var(--ink-soft); line-height:1.5; }
+  .stub-bottom .qr-meta b{ color:var(--ink); font-family:'Space Mono',monospace; font-size:12.5px; display:block; }
+
+  .footer-note{ text-align:center; font-size:11px; color:var(--ink-soft); margin-top:18px; line-height:1.6; }
+
+  .screen{ display:none; }
+  .screen.active{ display:block; animation:fadeIn .25s ease; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  .hospital-item{ display:flex; justify-content:space-between; align-items:center; padding:11px 2px; border-bottom:1px solid var(--line); font-size:12.5px; }
+  .hospital-item:last-child{ border-bottom:none; }
+  .hospital-item b{ display:block; font-family:'Archivo',sans-serif; font-size:13px; font-weight:700; }
+  .hospital-item span{ color:var(--ink-soft); font-size:11px; }
+  .hospital-item .dist{ font-family:'Space Mono',monospace; color:var(--teal-dark); font-weight:700; white-space:nowrap; }
+
+  .modal-back{ position:fixed; inset:0; background:rgba(24,36,32,0.45); display:none; align-items:center; justify-content:center; z-index:50; padding:20px;}
+  .modal-back.show{ display:flex; }
+  .modal{ background:var(--paper-raised); border-radius:14px; padding:22px; max-width:400px; width:100%; box-shadow:var(--shadow); max-height:85vh; overflow-y:auto; }
+  .modal h3{ font-size:16px; margin-bottom:12px; }
+  .close-x{ float:right; background:none; border:none; font-size:18px; cursor:pointer; color:var(--ink-soft); }
+  [data-tt]{ }
+
+  @media (max-width:380px){
+    .role-grid{ grid-template-columns:1fr; }
+    .feature-grid{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">IK</div>
+      <div class="brand-text">
+        <b data-tt="brandName">I-KRET</b>
+        <span data-tt="brandSub">Govt. OP Appointment System</span>
+      </div>
+    </div>
+    <div class="lang-toggle">
+      <button class="active" id="lang-en" onclick="setLang('en')">EN</button>
+      <button id="lang-ta" onclick="setLang('ta')">தமிழ்</button>
+    </div>
+  </div>
+
+  <div class="rail" id="rail">
+    <div class="rail-seg"><i></i></div>
+    <div class="rail-seg"><i></i></div>
+    <div class="rail-seg"><i></i></div>
+    <div class="rail-seg"><i></i></div>
+  </div>
+
+  <!-- SCREEN 1: AADHAAR ENTRY + VERIFICATION -->
+  <div class="screen active" id="screen-aadhaar">
+    <div class="card">
+      <div class="eyebrow"><span class="dot"></span><span data-tt="s1eyebrow">STEP 1 OF 4 · IDENTITY</span></div>
+      <h2 data-tt="s1title">Verify your Aadhaar</h2>
+      <p class="subtext" data-tt="s1sub">Your 12-digit Aadhaar number is used only to confirm identity for hospital records. It is never stored on this device.</p>
+
+      <div class="error-box" id="aadhaar-error"></div>
+
+      <div id="aadhaar-step-number">
+        <div class="field">
+          <label data-tt="s1label">Aadhaar number</label>
+          <input type="text" id="aadhaar-input" inputmode="numeric" maxlength="14" placeholder="XXXX XXXX XXXX" oninput="formatAadhaar(this)">
+          <div class="hint" data-tt="s1hint">Enter the 12-digit number exactly as printed on your Aadhaar card.</div>
+        </div>
+        <button class="btn btn-primary" onclick="sendOtp()" data-tt="s1btn">Send verification OTP</button>
+      </div>
+
+      <div id="aadhaar-step-otp" style="display:none;">
+        <div class="hint" style="margin-bottom:14px;" id="otp-sent-to"></div>
+        <div class="field">
+          <label data-tt="s1otplabel">Enter 6-digit OTP</label>
+          <div class="otp-row">
+            <input type="text" maxlength="1" class="otp-box" oninput="otpMove(this)">
+            <input type="text" maxlength="1" class="otp-box" oninput="otpMove(this)">
+            <input type="text" maxlength="1" class="otp-box" oninput="otpMove(this)">
+            <input type="text" maxlength="1" class="otp-box" oninput="otpMove(this)">
+            <input type="text" maxlength="1" class="otp-box" oninput="otpMove(this)">
+            <input type="text" maxlength="1" class="otp-box" oninput="otpMove(this)">
+          </div>
+          <div class="hint" data-tt="s1otphint">Demo mode: any 6 digits will verify successfully.</div>
+        </div>
+        <button class="btn btn-primary" onclick="verifyOtp()" data-tt="s1verifybtn">Verify &amp; continue</button>
+        <button class="btn btn-ghost" onclick="backToAadhaarNumber()" data-tt="s1changebtn">Change number</button>
+      </div>
+    </div>
+    <p class="footer-note" data-tt="footnote1">I-KRET is a college demonstration project inspired by Tamil Nadu's hospital OP systems. No real Aadhaar data is transmitted or stored.</p>
+  </div>
+
+  <!-- SCREEN 2: ROLE SELECTION -->
+  <div class="screen" id="screen-role">
+    <div class="card">
+      <div class="verified-banner"><span class="tick">✓</span><span data-tt="s2verified">Aadhaar verified</span></div>
+      <div class="eyebrow"><span class="dot"></span><span data-tt="s2eyebrow">STEP 2 OF 4 · ROLE</span></div>
+      <h2 data-tt="s2title">Continue as</h2>
+      <p class="subtext" data-tt="s2sub">Choose how you'd like to use I-KRET today.</p>
+      <div class="role-grid">
+        <div class="role-card patient" onclick="chooseRole('patient')">
+          <div class="icon">🧑‍🦱</div>
+          <b data-tt="s2patient">Patient</b>
+          <span data-tt="s2patientsub">Book &amp; manage OP visits</span>
+        </div>
+        <div class="role-card doctor" onclick="chooseRole('doctor')">
+          <div class="icon">🩺</div>
+          <b data-tt="s2doctor">Doctor</b>
+          <span data-tt="s2doctorsub">Manage OP queue &amp; records</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 3A: DOCTOR VERIFICATION -->
+  <div class="screen" id="screen-doctor-verify">
+    <div class="card">
+      <div class="eyebrow"><span class="dot"></span><span data-tt="s3deyebrow">STEP 3 OF 4 · DOCTOR VERIFICATION</span></div>
+      <h2 data-tt="s3dtitle">Registration certificate</h2>
+      <p class="subtext" data-tt="s3dsub">Enter your Tamil Nadu Medical Council (TNMC) registration number to access the doctor dashboard.</p>
+      <div class="error-box" id="doctor-error"></div>
+      <div class="field">
+        <label data-tt="s3dlabel1">Full name</label>
+        <input type="text" id="doctor-name" placeholder="Dr. ">
+      </div>
+      <div class="field">
+        <label data-tt="s3dlabel2">TNMC certificate / registration no.</label>
+        <input type="text" id="doctor-cert" class="mono" placeholder="TNMC-2024-XXXXXX">
+        <div class="hint" data-tt="s3dhint">Format example: TNMC-2024-114582. Demo mode accepts any well-formed entry.</div>
+      </div>
+      <div class="field">
+        <label data-tt="s3dlabel3">Department</label>
+        <select id="doctor-dept">
+          <option data-tt="deptGM">General Medicine</option>
+          <option data-tt="deptPed">Paediatrics</option>
+          <option data-tt="deptOrtho">Orthopaedics</option>
+          <option data-tt="deptGyn">Gynaecology</option>
+          <option data-tt="deptENT">ENT</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="verifyDoctor()" data-tt="s3dbtn">Verify &amp; enter dashboard</button>
+      <button class="btn btn-ghost" onclick="goScreen('screen-role')" data-tt="backbtn">Back</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 3B: PATIENT APPOINTMENT BOOKING -->
+  <div class="screen" id="screen-patient-book">
+    <div class="card">
+      <div class="eyebrow"><span class="dot"></span><span data-tt="s3peyebrow">STEP 3 OF 4 · BOOK APPOINTMENT</span></div>
+      <h2 data-tt="s3ptitle">Book your OP visit</h2>
+      <p class="subtext" data-tt="s3psub">One-time registration, then choose a department, date and time slot.</p>
+      <div class="error-box" id="patient-error"></div>
+      <div class="field">
+        <label data-tt="s3plabel1">Full name</label>
+        <input type="text" id="patient-name" placeholder="As per Aadhaar">
+      </div>
+      <div class="field">
+        <label data-tt="s3plabel2">Mobile number</label>
+        <input type="tel" id="patient-mobile" maxlength="10" placeholder="10-digit mobile number">
+      </div>
+      <div class="field">
+        <label data-tt="s3plabel3">Department</label>
+        <select id="patient-dept">
+          <option data-tt="deptGM">General Medicine</option>
+          <option data-tt="deptPed">Paediatrics</option>
+          <option data-tt="deptOrtho">Orthopaedics</option>
+          <option data-tt="deptGyn">Gynaecology</option>
+          <option data-tt="deptENT">ENT</option>
+        </select>
+      </div>
+      <div class="field">
+        <label data-tt="s3plabel4">Preferred date</label>
+        <input type="date" id="patient-date">
+      </div>
+      <div class="field">
+        <label data-tt="s3plabel5">Preferred time slot</label>
+        <div class="timeslots" id="timeslot-grid"></div>
+      </div>
+      <button class="btn btn-amber" onclick="bookAppointment()" data-tt="s3pbtn">Book appointment</button>
+      <button class="btn btn-ghost" onclick="goScreen('screen-role')" data-tt="backbtn">Back</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 4A: DOCTOR DASHBOARD -->
+  <div class="screen" id="screen-doctor-dash">
+    <div class="card">
+      <div class="dash-header">
+        <div class="dash-user">
+          <div class="avatar" id="doc-avatar">D</div>
+          <div>
+            <b id="doc-name-display"></b>
+            <span id="doc-dept-display"></span>
+          </div>
+        </div>
+        <button class="logout-link" onclick="restart()" data-tt="logout">Log out</button>
+      </div>
+
+      <div class="queue-card">
+        <div>
+          <div class="lbl" data-tt="docQueueLbl">Patients waiting</div>
+          <div class="num" id="doc-queue-count">07</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="lbl" data-tt="docNextLbl">Next token</div>
+          <div class="num" id="doc-next-token">B-14</div>
+        </div>
+      </div>
+
+      <div class="eyebrow"><span class="dot"></span><span data-tt="docQueueTitle">TODAY'S OP QUEUE</span></div>
+      <div style="margin-bottom:18px;">
+        <div class="list-row"><span>B-12 · Meenakshi S.</span><span class="tag normal" data-tt="tagWaiting">Waiting</span></div>
+        <div class="list-row"><span>B-13 · Arun Kumar R.</span><span class="tag urgent" data-tt="tagUrgent">Urgent</span></div>
+        <div class="list-row"><span>B-14 · Priya D.</span><span class="tag normal" data-tt="tagWaiting">Waiting</span></div>
+        <div class="list-row"><span>B-15 · Karthik V.</span><span class="tag normal" data-tt="tagWaiting">Waiting</span></div>
+      </div>
+
+      <div class="eyebrow"><span class="dot"></span><span data-tt="docToolsTitle">TOOLS</span></div>
+      <div class="feature-grid">
+        <div class="feature-tile" onclick="openModal('modal-prescriptions')"><span class="fi">📝</span><b data-tt="ft-presc">Write prescription</b><span data-tt="ft-presc-sub">For current patient</span></div>
+        <div class="feature-tile" onclick="openModal('modal-labreports')"><span class="fi">🧪</span><b data-tt="ft-lab">Lab reports</b><span data-tt="ft-lab-sub">Review results</span></div>
+        <div class="feature-tile" onclick="openModal('modal-checkin')"><span class="fi">🚪</span><b data-tt="ft-checkin">Call next token</b><span data-tt="ft-checkin-sub">Advance queue</span></div>
+        <div class="feature-tile" onclick="openModal('modal-hospitals')"><span class="fi">🏥</span><b data-tt="ft-hosp">Facility directory</b><span data-tt="ft-hosp-sub">Nearby govt. hospitals</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 4B: PATIENT DASHBOARD -->
+  <div class="screen" id="screen-patient-dash">
+    <div class="card">
+      <div class="dash-header">
+        <div class="dash-user">
+          <div class="avatar" id="pat-avatar">P</div>
+          <div>
+            <b id="pat-name-display"></b>
+            <span id="pat-mobile-display"></span>
+          </div>
+        </div>
+        <button class="logout-link" onclick="restart()" data-tt="logout">Log out</button>
+      </div>
+
+      <div class="eyebrow"><span class="dot"></span><span data-tt="patFeaturesTitle">MY SERVICES</span></div>
+      <div class="feature-grid" style="margin-bottom:18px;">
+        <div class="feature-tile" onclick="goConfirmation()"><span class="fi">📅</span><b data-tt="ft-book">View appointment</b><span data-tt="ft-book-sub">Token &amp; OP order</span></div>
+        <div class="feature-tile" onclick="openModal('modal-presc-view')"><span class="fi">💊</span><b data-tt="ft-prescview">Prescriptions</b><span data-tt="ft-prescview-sub">From your doctor</span></div>
+        <div class="feature-tile" onclick="openModal('modal-labreports')"><span class="fi">🧪</span><b data-tt="ft-labview">Lab reports</b><span data-tt="ft-labview-sub">Test results</span></div>
+        <div class="feature-tile" onclick="goConfirmation()"><span class="fi">🆔</span><b data-tt="ft-opcard">OP card</b><span data-tt="ft-opcard-sub">Download with QR</span></div>
+        <div class="feature-tile" onclick="openModal('modal-hospitals')"><span class="fi">🏥</span><b data-tt="ft-nearby">Nearby hospitals</b><span data-tt="ft-nearby-sub">Govt. facilities</span></div>
+        <div class="feature-tile" onclick="openModal('modal-checkin')"><span class="fi">🚪</span><b data-tt="ft-evisit">e-Visit check-in</b><span data-tt="ft-evisit-sub">Get queue number</span></div>
+      </div>
+      <button class="btn btn-amber" onclick="goConfirmation()" data-tt="viewOrderBtn">View appointment order</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 5: CONFIRMATION / APPOINTMENT ORDER -->
+  <div class="screen" id="screen-confirm">
+    <div class="card">
+      <div class="eyebrow"><span class="dot"></span><span data-tt="s5eyebrow">STEP 4 OF 4 · CONFIRMED</span></div>
+      <h2 data-tt="s5title">Appointment order</h2>
+      <p class="subtext" data-tt="s5sub">Show this token at the OP registration desk, or scan the QR at the e-visit kiosk.</p>
+
+      <div class="stub">
+        <div class="stub-top">
+          <div class="op-title" data-tt="stubOP">OP TOKEN · GOVERNMENT HOSPITAL</div>
+          <div class="op-hosp" id="stub-hospital">Govt. Hospital, Dindigul</div>
+          <div class="stub-grid">
+            <div><b data-tt="stubName">Patient</b><span id="stub-name">—</span></div>
+            <div><b data-tt="stubToken">Token no.</b><span id="stub-token">—</span></div>
+            <div><b data-tt="stubDept">Department</b><span id="stub-dept">—</span></div>
+            <div><b data-tt="stubDate">Date</b><span id="stub-date">—</span></div>
+            <div><b data-tt="stubTime">Time slot</b><span id="stub-time">—</span></div>
+            <div><b data-tt="stubDoctor">Attending</b><span id="stub-doctor">—</span></div>
+          </div>
+        </div>
+        <div class="perforation"></div>
+        <div class="stub-bottom">
+          <canvas class="qr-box" id="qr-canvas" width="76" height="76"></canvas>
+          <div class="qr-meta">
+            <b id="stub-aadhaar-mask">XXXX XXXX XXXX</b>
+            <span data-tt="stubHint">Aadhaar-linked · verified identity</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" onclick="downloadCard()" data-tt="s5downloadbtn">Download OP card</button>
+      <button class="btn btn-ghost" onclick="goBackToDash()" data-tt="s5backbtn">Back to dashboard</button>
+    </div>
+    <p class="footer-note" data-tt="footnote2">I-KRET · AI-Integrated Medical Appointment Scheduling · SDG 3 project</p>
+  </div>
+
+</div>
+
+<!-- MODALS -->
+<div class="modal-back" id="modal-back">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<script>
+/* ---------------- STATE ---------------- */
+const state = {
+  lang:'en', aadhaar:'', role:null,
+  doctorName:'', doctorCert:'', doctorDept:'',
+  patientName:'', patientMobile:'', patientDept:'', apptDate:'', apptTime:'',
+  tokenNumber:'', queueLetter:'B'
+};
+
+const TIMESLOTS = ['09:00–09:30','09:30–10:00','10:00–10:30','10:30–11:00','11:00–11:30','11:30–12:00','13:00–13:30','13:30–14:00','14:00–14:30'];
+const DISABLED_SLOTS = ['10:00–10:30','13:30–14:00'];
+const HOSPITALS = [
+  {name:'Govt. Hospital, Dindigul', dist:'1.2 km'},
+  {name:'Coimbatore Medical College Hospital', dist:'38 km'},
+  {name:'Tiruppur Govt. Headquarters Hospital', dist:'52 km'},
+  {name:'Govt. Medical College Hospital, Ooty', dist:'88 km'},
+  {name:'Madurai Govt. Rajaji Hospital', dist:'64 km'}
+];
+
+/* ---------------- TRANSLATIONS ---------------- */
+const T = {
+  en:{
+    brandName:'I-KRET', brandSub:'Govt. OP Appointment System',
+    s1eyebrow:'STEP 1 OF 4 · IDENTITY', s1title:'Verify your Aadhaar',
+    s1sub:"Your 12-digit Aadhaar number is used only to confirm identity for hospital records. It is never stored on this device.",
+    s1label:'Aadhaar number', s1hint:'Enter the 12-digit number exactly as printed on your Aadhaar card.',
+    s1btn:'Send verification OTP', s1otplabel:'Enter 6-digit OTP',
+    s1otphint:'Demo mode: any 6 digits will verify successfully.',
+    s1verifybtn:'Verify & continue', s1changebtn:'Change number',
+    footnote1:"I-KRET is a college demonstration project inspired by Tamil Nadu's hospital OP systems. No real Aadhaar data is transmitted or stored.",
+    s2verified:'Aadhaar verified', s2eyebrow:'STEP 2 OF 4 · ROLE', s2title:'Continue as',
+    s2sub:"Choose how you'd like to use I-KRET today.",
+    s2patient:'Patient', s2patientsub:'Book & manage OP visits',
+    s2doctor:'Doctor', s2doctorsub:'Manage OP queue & records',
+    s3deyebrow:'STEP 3 OF 4 · DOCTOR VERIFICATION', s3dtitle:'Registration certificate',
+    s3dsub:'Enter your Tamil Nadu Medical Council (TNMC) registration number to access the doctor dashboard.',
+    s3dlabel1:'Full name', s3dlabel2:'TNMC certificate / registration no.',
+    s3dhint:'Format example: TNMC-2024-114582. Demo mode accepts any well-formed entry.',
+    s3dlabel3:'Department', s3dbtn:'Verify & enter dashboard', backbtn:'Back',
+    s3peyebrow:'STEP 3 OF 4 · BOOK APPOINTMENT', s3ptitle:'Book your OP visit',
+    s3psub:'One-time registration, then choose a department, date and time slot.',
+    s3plabel1:'Full name', s3plabel2:'Mobile number', s3plabel3:'Department',
+    s3plabel4:'Preferred date', s3plabel5:'Preferred time slot', s3pbtn:'Book appointment',
+    deptGM:'General Medicine', deptPed:'Paediatrics', deptOrtho:'Orthopaedics', deptGyn:'Gynaecology', deptENT:'ENT',
+    logout:'Log out', docQueueLbl:'Patients waiting', docNextLbl:'Next token',
+    docQueueTitle:"TODAY'S OP QUEUE", docToolsTitle:'TOOLS',
+    tagWaiting:'Waiting', tagUrgent:'Urgent',
+    'ft-presc':'Write prescription','ft-presc-sub':'For current patient',
+    'ft-lab':'Lab reports','ft-lab-sub':'Review results',
+    'ft-checkin':'Call next token','ft-checkin-sub':'Advance queue',
+    'ft-hosp':'Facility directory','ft-hosp-sub':'Nearby govt. hospitals',
+    patFeaturesTitle:'MY SERVICES',
+    'ft-book':'View appointment','ft-book-sub':'Token & OP order',
+    'ft-prescview':'Prescriptions','ft-prescview-sub':'From your doctor',
+    'ft-labview':'Lab reports','ft-labview-sub':'Test results',
+    'ft-opcard':'OP card','ft-opcard-sub':'Download with QR',
+    'ft-nearby':'Nearby hospitals','ft-nearby-sub':'Govt. facilities',
+    'ft-evisit':'e-Visit check-in','ft-evisit-sub':'Get queue number',
+    viewOrderBtn:'View appointment order',
+    s5eyebrow:'STEP 4 OF 4 · CONFIRMED', s5title:'Appointment order',
+    s5sub:'Show this token at the OP registration desk, or scan the QR at the e-visit kiosk.',
+    stubOP:'OP TOKEN · GOVERNMENT HOSPITAL', stubName:'Patient', stubToken:'Token no.',
+    stubDept:'Department', stubDate:'Date', stubTime:'Time slot', stubDoctor:'Attending',
+    stubHint:'Aadhaar-linked · verified identity',
+    s5downloadbtn:'Download OP card', s5backbtn:'Back to dashboard',
+    footnote2:'I-KRET · AI-Integrated Medical Appointment Scheduling · SDG 3 project'
+  },
+  ta:{
+    brandName:'ஐ-க்ரெட்', brandSub:'அரசு OP நேரம் ஒதுக்கீடு அமைப்பு',
+    s1eyebrow:'படி 1/4 · அடையாளம்', s1title:'உங்கள் ஆதார் சரிபார்க்கவும்',
+    s1sub:'உங்கள் 12 இலக்க ஆதார் எண் மருத்துவமனை பதிவேட்டில் அடையாளத்தை உறுதிப்படுத்த மட்டுமே பயன்படுத்தப்படும். இது சாதனத்தில் சேமிக்கப்படாது.',
+    s1label:'ஆதார் எண்', s1hint:'உங்கள் அட்டையில் அச்சிடப்பட்டுள்ளபடி 12 இலக்க எண்ணை உள்ளிடவும்.',
+    s1btn:'சரிபார்ப்பு OTP அனுப்பவும்', s1otplabel:'6 இலக்க OTP ஐ உள்ளிடவும்',
+    s1otphint:'டெமோ முறை: எந்த 6 இலக்கமும் வெற்றிகரமாக சரிபார்க்கப்படும்.',
+    s1verifybtn:'சரிபார்த்து தொடரவும்', s1changebtn:'எண்ணை மாற்றவும்',
+    footnote1:'I-KRET என்பது தமிழ்நாட்டின் மருத்துவமனை OP அமைப்புகளால் ஈர்க்கப்பட்ட கல்லூரி செயல்முறை. உண்மையான ஆதார் தரவு அனுப்பப்படவோ சேமிக்கப்படவோ இல்லை.',
+    s2verified:'ஆதார் சரிபார்க்கப்பட்டது', s2eyebrow:'படி 2/4 · பங்கு', s2title:'தொடரவும்',
+    s2sub:'இன்று I-KRET ஐ எப்படி பயன்படுத்த விரும்புகிறீர்கள் என்பதை தேர்ந்தெடுக்கவும்.',
+    s2patient:'நோயாளி', s2patientsub:'OP வருகைகளை பதிவு செய்யவும்',
+    s2doctor:'மருத்துவர்', s2doctorsub:'OP வரிசை மற்றும் பதிவேடுகளை நிர்வகிக்கவும்',
+    s3deyebrow:'படி 3/4 · மருத்துவர் சரிபார்ப்பு', s3dtitle:'பதிவு சான்றிதழ்',
+    s3dsub:'மருத்துவர் டாஷ்போர்டை அணுக உங்கள் TNMC பதிவு எண்ணை உள்ளிடவும்.',
+    s3dlabel1:'முழு பெயர்', s3dlabel2:'TNMC சான்றிதழ் / பதிவு எண்',
+    s3dhint:'எடுத்துக்காட்டு: TNMC-2024-114582. டெமோ முறையில் எந்த சரியான வடிவமும் ஏற்கப்படும்.',
+    s3dlabel3:'துறை', s3dbtn:'சரிபார்த்து டாஷ்போர்டுக்குச் செல்லவும்', backbtn:'பின்செல்',
+    s3peyebrow:'படி 3/4 · நேரம் பதிவு', s3ptitle:'உங்கள் OP வருகையை பதிவு செய்யவும்',
+    s3psub:'ஒரு முறை பதிவு, பின் துறை, தேதி மற்றும் நேரத்தை தேர்ந்தெடுக்கவும்.',
+    s3plabel1:'முழு பெயர்', s3plabel2:'மொபைல் எண்', s3plabel3:'துறை',
+    s3plabel4:'விருப்பமான தேதி', s3plabel5:'விருப்பமான நேரம்', s3pbtn:'நேரம் பதிவு செய்யவும்',
+    deptGM:'பொது மருத்துவம்', deptPed:'குழந்தை மருத்துவம்', deptOrtho:'எலும்பியல்', deptGyn:'மகளிர் மருத்துவம்', deptENT:'காது மூக்கு தொண்டை',
+    logout:'வெளியேறு', docQueueLbl:'காத்திருக்கும் நோயாளிகள்', docNextLbl:'அடுத்த டோக்கன்',
+    docQueueTitle:'இன்றைய OP வரிசை', docToolsTitle:'கருவிகள்',
+    tagWaiting:'காத்திருப்பு', tagUrgent:'அவசரம்',
+    'ft-presc':'மருந்து சீட்டு எழுதவும்','ft-presc-sub':'தற்போதைய நோயாளிக்கு',
+    'ft-lab':'ஆய்வக அறிக்கைகள்','ft-lab-sub':'முடிவுகளை பார்க்கவும்',
+    'ft-checkin':'அடுத்த டோக்கனை அழைக்கவும்','ft-checkin-sub':'வரிசையை முன்னேற்றவும்',
+    'ft-hosp':'வசதிகள் அடைவு','ft-hosp-sub':'அருகிலுள்ள அரசு மருத்துவமனைகள்',
+    patFeaturesTitle:'எனது சேவைகள்',
+    'ft-book':'நேரம் பார்க்கவும்','ft-book-sub':'டோக்கன் & OP ஆர்டர்',
+    'ft-prescview':'மருந்து சீட்டுகள்','ft-prescview-sub':'உங்கள் மருத்துவரிடமிருந்து',
+    'ft-labview':'ஆய்வக அறிக்கைகள்','ft-labview-sub':'பரிசோதனை முடிவுகள்',
+    'ft-opcard':'OP அட்டை','ft-opcard-sub':'QR உடன் பதிவிறக்கவும்',
+    'ft-nearby':'அருகிலுள்ள மருத்துவமனைகள்','ft-nearby-sub':'அரசு வசதிகள்',
+    'ft-evisit':'e-Visit பதிவு','ft-evisit-sub':'வரிசை எண் பெறவும்',
+    viewOrderBtn:'நேரம் ஆர்டரை பார்க்கவும்',
+    s5eyebrow:'படி 4/4 · உறுதி செய்யப்பட்டது', s5title:'நேரம் ஆர்டர்',
+    s5sub:'இந்த டோக்கனை OP பதிவு மேசையில் காட்டவும் அல்லது e-visit கியோஸ்கில் QR ஐ ஸ்கேன் செய்யவும்.',
+    stubOP:'OP டோக்கன் · அரசு மருத்துவமனை', stubName:'நோயாளி', stubToken:'டோக்கன் எண்',
+    stubDept:'துறை', stubDate:'தேதி', stubTime:'நேரம்', stubDoctor:'மருத்துவர்',
+    stubHint:'ஆதார் இணைக்கப்பட்டது · சரிபார்க்கப்பட்ட அடையாளம்',
+    s5downloadbtn:'OP அட்டையை பதிவிறக்கவும்', s5backbtn:'டாஷ்போர்டுக்கு திரும்பவும்',
+    footnote2:'I-KRET · AI-ஒருங்கிணைந்த மருத்துவ நேரம் ஒதுக்கீடு · SDG 3 திட்டம்'
+  }
+};
+
+function applyTranslations(){
+  const dict = T[state.lang];
+  document.querySelectorAll('[data-tt]').forEach(el=>{
+    const key = el.getAttribute('data-tt');
+    if(dict[key]) el.textContent = dict[key];
+  });
+}
+function setLang(l){
+  state.lang = l;
+  document.getElementById('lang-en').classList.toggle('active', l==='en');
+  document.getElementById('lang-ta').classList.toggle('active', l==='ta');
+  applyTranslations();
+}
+
+/* ---------------- NAVIGATION ---------------- */
+const RAIL_STEPS = {'screen-aadhaar':1,'screen-role':2,'screen-doctor-verify':3,'screen-patient-book':3,'screen-doctor-dash':4,'screen-patient-dash':4,'screen-confirm':4};
+function goScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const step = RAIL_STEPS[id] || 1;
+  document.querySelectorAll('.rail-seg i').forEach((seg,idx)=>{
+    seg.style.width = (idx < step) ? '100%' : '0%';
+  });
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ---------------- SCREEN 1: AADHAAR ---------------- */
+function formatAadhaar(input){
+  let digits = input.value.replace(/\D/g,'').slice(0,12);
+  let grouped = digits.replace(/(\d{4})(?=\d)/g,'$1 ');
+  input.value = grouped;
+}
+function showError(id, msg){
+  const box = document.getElementById(id);
+  box.textContent = msg;
+  box.classList.add('show');
+}
+function clearError(id){
+  document.getElementById(id).classList.remove('show');
+}
+function sendOtp(){
+  clearError('aadhaar-error');
+  const raw = document.getElementById('aadhaar-input').value.replace(/\D/g,'');
+  if(raw.length !== 12){
+    showError('aadhaar-error', state.lang==='ta' ? 'சரியான 12 இலக்க ஆதார் எண்ணை உள்ளிடவும்.' : 'Please enter a valid 12-digit Aadhaar number.');
+    return;
+  }
+  state.aadhaar = raw;
+  document.getElementById('aadhaar-step-number').style.display = 'none';
+  document.getElementById('aadhaar-step-otp').style.display = 'block';
+  const masked = 'XXXX XXXX ' + raw.slice(8);
+  document.getElementById('otp-sent-to').textContent = (state.lang==='ta' ? 'OTP அனுப்பப்பட்டது: ' : 'OTP sent to Aadhaar-linked mobile ending in ') + raw.slice(-4);
+  document.querySelectorAll('.otp-box')[0]?.focus();
+}
+function backToAadhaarNumber(){
+  document.getElementById('aadhaar-step-otp').style.display = 'none';
+  document.getElementById('aadhaar-step-number').style.display = 'block';
+}
+function otpMove(el){
+  el.value = el.value.replace(/\D/g,'');
+  if(el.value && el.nextElementSibling && el.nextElementSibling.classList.contains('otp-box')){
+    el.nextElementSibling.focus();
+  }
+}
+function verifyOtp(){
+  clearError('aadhaar-error');
+  const boxes = document.querySelectorAll('.otp-box');
+  let otp = '';
+  boxes.forEach(b=>otp+=b.value);
+  if(otp.length !== 6){
+    showError('aadhaar-error', state.lang==='ta' ? 'முழு 6 இலக்க OTP ஐ உள்ளிடவும்.' : 'Please enter the full 6-digit OTP.');
+    return;
+  }
+  goScreen('screen-role');
+}
+
+/* ---------------- SCREEN 2: ROLE ---------------- */
+function chooseRole(role){
+  state.role = role;
+  if(role === 'doctor'){
+    goScreen('screen-doctor-verify');
+  } else {
+    setupTimeslots();
+    goScreen('screen-patient-book');
+  }
+}
+
+/* ---------------- SCREEN 3A: DOCTOR VERIFY ---------------- */
+function verifyDoctor(){
+  clearError('doctor-error');
+  const name = document.getElementById('doctor-name').value.trim();
+  const cert = document.getElementById('doctor-cert').value.trim();
+  const dept = document.getElementById('doctor-dept').value;
+  if(!name){
+    showError('doctor-error', state.lang==='ta' ? 'உங்கள் பெயரை உள்ளிடவும்.' : 'Please enter your full name.');
+    return;
+  }
+  if(cert.length < 6){
+    showError('doctor-error', state.lang==='ta' ? 'சரியான சான்றிதழ் எண்ணை உள்ளிடவும்.' : 'Please enter a valid TNMC certificate number.');
+    return;
+  }
+  state.doctorName = name;
+  state.doctorCert = cert;
+  state.doctorDept = dept;
+  document.getElementById('doc-avatar').textContent = name.replace('Dr.','').trim()[0] || 'D';
+  document.getElementById('doc-name-display').textContent = name;
+  document.getElementById('doc-dept-display').textContent = dept + ' · ' + cert;
+  goScreen('screen-doctor-dash');
+}
+
+/* ---------------- SCREEN 3B: PATIENT BOOKING ---------------- */
+function setupTimeslots(){
+  const grid = document.getElementById('timeslot-grid');
+  grid.innerHTML = '';
+  TIMESLOTS.forEach(slot=>{
+    const div = document.createElement('div');
+    const disabled = DISABLED_SLOTS.includes(slot);
+    div.className = 'timeslot' + (disabled ? ' disabled' : '');
+    div.textContent = slot;
+    if(!disabled){
+      div.onclick = ()=>{
+        document.querySelectorAll('.timeslot').forEach(t=>t.classList.remove('active'));
+        div.classList.add('active');
+        state.apptTime = slot;
+      };
+    }
+    grid.appendChild(div);
+  });
+  const dateInput = document.getElementById('patient-date');
+  const today = new Date();
+  dateInput.min = today.toISOString().split('T')[0];
+  const def = new Date(today.getTime() + 86400000);
+  dateInput.value = def.toISOString().split('T')[0];
+}
+function bookAppointment(){
+  clearError('patient-error');
+  const name = document.getElementById('patient-name').value.trim();
+  const mobile = document.getElementById('patient-mobile').value.trim();
+  const dept = document.getElementById('patient-dept').value;
+  const date = document.getElementById('patient-date').value;
+  if(!name){
+    showError('patient-error', state.lang==='ta' ? 'உங்கள் பெயரை உள்ளிடவும்.' : 'Please enter your full name.');
+    return;
+  }
+  if(!/^\d{10}$/.test(mobile)){
+    showError('patient-error', state.lang==='ta' ? 'சரியான 10 இலக்க மொபைல் எண்ணை உள்ளிடவும்.' : 'Please enter a valid 10-digit mobile number.');
+    return;
+  }
+  if(!date){
+    showError('patient-error', state.lang==='ta' ? 'தேதியை தேர்ந்தெடுக்கவும்.' : 'Please choose a preferred date.');
+    return;
+  }
+  if(!state.apptTime){
+    showError('patient-error', state.lang==='ta' ? 'நேர இடைவெளியை தேர்ந்தெடுக்கவும்.' : 'Please choose a time slot.');
+    return;
+  }
+  state.patientName = name;
+  state.patientMobile = mobile;
+  state.patientDept = dept;
+  state.apptDate = date;
+  state.tokenNumber = state.queueLetter + '-' + (12 + Math.floor(Math.random()*8));
+
+  document.getElementById('pat-avatar').textContent = name[0].toUpperCase();
+  document.getElementById('pat-name-display').textContent = name;
+  document.getElementById('pat-mobile-display').textContent = '+91 ' + mobile;
+
+  goScreen('screen-patient-dash');
+}
+
+/* ---------------- SCREEN 5: CONFIRMATION ---------------- */
+function goConfirmation(){
+  document.getElementById('stub-name').textContent = state.patientName || '—';
+  document.getElementById('stub-token').textContent = state.tokenNumber || '—';
+  document.getElementById('stub-dept').textContent = state.patientDept || '—';
+  document.getElementById('stub-date').textContent = state.apptDate ? formatDate(state.apptDate) : '—';
+  document.getElementById('stub-time').textContent = state.apptTime || '—';
+  document.getElementById('stub-doctor').textContent = assignedDoctor(state.patientDept);
+  document.getElementById('stub-aadhaar-mask').textContent = state.aadhaar ? ('XXXX XXXX ' + state.aadhaar.slice(-4)) : 'XXXX XXXX XXXX';
+  drawQr();
+  goScreen('screen-confirm');
+}
+function formatDate(iso){
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString(state.lang==='ta' ? 'ta-IN' : 'en-IN', {day:'2-digit', month:'short', year:'numeric'});
+}
+function assignedDoctor(dept){
+  const map = {
+    'General Medicine':'Dr. R. Saravanan', 'Paediatrics':'Dr. K. Meena',
+    'Orthopaedics':'Dr. S. Vignesh', 'Gynaecology':'Dr. A. Lakshmi', 'ENT':'Dr. P. Bala',
+    'பொது மருத்துவம்':'Dr. R. Saravanan', 'குழந்தை மருத்துவம்':'Dr. K. Meena',
+    'எலும்பியல்':'Dr. S. Vignesh', 'மகளிர் மருத்துவம்':'Dr. A. Lakshmi', 'காது மூக்கு தொண்டை':'Dr. P. Bala'
+  };
+  return map[dept] || 'Dr. R. Saravanan';
+}
+function goBackToDash(){
+  goScreen('screen-patient-dash');
+}
+function downloadCard(){
+  alert(state.lang==='ta' ? 'இது ஒரு டெமோ. உண்மையான படிநிலையில் இது PDF/PNG OP அட்டையை பதிவிறக்கும்.' : "This is a demo action. In production, this would download a PDF/PNG OP card with your token and QR code.");
+}
+
+/* ---------------- QR (deterministic pseudo pattern, self-contained) ---------------- */
+function drawQr(){
+  const canvas = document.getElementById('qr-canvas');
+  const ctx = canvas.getContext('2d');
+  const size = 76, cells = 11, cell = size/cells;
+  ctx.clearRect(0,0,size,size);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0,0,size,size);
+  const seedStr = (state.tokenNumber||'IKRET') + (state.aadhaar||'000000000000') + (state.apptDate||'');
+  let seed = 0;
+  for(let i=0;i<seedStr.length;i++) seed = (seed * 31 + seedStr.charCodeAt(i)) >>> 0;
+  function rand(){ seed = (seed * 1103515245 + 12345) >>> 0; return (seed >>> 8) / 16777216; }
+  ctx.fillStyle = '#182420';
+  for(let y=0;y<cells;y++){
+    for(let x=0;x<cells;x++){
+      const isFinder = (x<3 && y<3) || (x>cells-4 && y<3) || (x<3 && y>cells-4);
+      if(isFinder) continue;
+      if(rand() > 0.55) ctx.fillRect(x*cell, y*cell, cell-1, cell-1);
+    }
+  }
+  // finder patterns
+  [[0,0],[cells-3,0],[0,cells-3]].forEach(([fx,fy])=>{
+    ctx.fillStyle = '#182420';
+    ctx.fillRect(fx*cell, fy*cell, cell*3-1, cell*3-1);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(fx*cell+cell*0.6, fy*cell+cell*0.6, cell*1.8, cell*1.8);
+    ctx.fillStyle = '#182420';
+    ctx.fillRect(fx*cell+cell*1.1, fy*cell+cell*1.1, cell*0.8, cell*0.8);
+  });
+}
+
+/* ---------------- MODALS ---------------- */
+function openModal(kind){
+  const content = document.getElementById('modal-content');
+  let html = '';
+  if(kind === 'modal-prescriptions' || kind === 'modal-presc-view'){
+    html = `<button class="close-x" onclick="closeModal()">✕</button>
+      <h3>${T[state.lang]['ft-presc'] || 'Prescriptions'}</h3>
+      <div class="list-row"><span>Paracetamol 500mg — 1-0-1, 3 days</span></div>
+      <div class="list-row"><span>Vitamin D3 60k IU — once weekly, 4 weeks</span></div>
+      <div class="list-row"><span>ORS sachets — as needed</span></div>`;
+  } else if(kind === 'modal-labreports'){
+    html = `<button class="close-x" onclick="closeModal()">✕</button>
+      <h3>${T[state.lang]['ft-lab'] || 'Lab reports'}</h3>
+      <div class="list-row"><span>CBC — Complete</span><span class="tag normal">Ready</span></div>
+      <div class="list-row"><span>Blood Sugar (Fasting)</span><span class="tag normal">Ready</span></div>
+      <div class="list-row"><span>Lipid Profile</span><span class="tag urgent">Pending</span></div>`;
+  } else if(kind === 'modal-checkin'){
+    const tk = state.tokenNumber || (state.queueLetter + '-16');
+    html = `<button class="close-x" onclick="closeModal()">✕</button>
+      <h3 data-tt="ft-evisit">e-Visit check-in</h3>
+      <p class="subtext" style="margin-bottom:14px;">${state.lang==='ta' ? 'உங்கள் வரிசை எண்:' : 'Your queue number is'}</p>
+      <div class="queue-card" style="margin-bottom:0;"><div class="num">${tk}</div><div class="lbl">${state.lang==='ta' ? 'தற்போதைய அழைப்பு: B-11' : 'Now serving: B-11'}</div></div>`;
+  } else if(kind === 'modal-hospitals'){
+    let rows = HOSPITALS.map(h=>`<div class="hospital-item"><div><b>${h.name}</b><span>${state.lang==='ta' ? 'அரசு மருத்துவமனை' : 'Government hospital'}</span></div><span class="dist">${h.dist}</span></div>`).join('');
+    html = `<button class="close-x" onclick="closeModal()">✕</button>
+      <h3 data-tt="ft-hosp">Facility directory</h3>${rows}`;
+  }
+  content.innerHTML = html;
+  document.getElementById('modal-back').classList.add('show');
+}
+function closeModal(){
+  document.getElementById('modal-back').classList.remove('show');
+}
+document.getElementById('modal-back').addEventListener('click', (e)=>{
+  if(e.target.id === 'modal-back') closeModal();
+});
+
+/* ---------------- RESTART ---------------- */
+function restart(){
+  location.reload();
+}
+
+/* ---------------- INIT ---------------- */
+applyTranslations();
+goScreen('screen-aadhaar');
+</script>
+</body>
+</html>
